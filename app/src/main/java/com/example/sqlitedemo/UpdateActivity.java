@@ -6,6 +6,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.DatePickerDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -13,7 +14,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.SearchView;
 import android.widget.TextView;
 
@@ -22,22 +22,27 @@ import com.example.sqlitedemo.model.Order;
 import java.util.Calendar;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class UpdateActivity extends AppCompatActivity implements View.OnClickListener {
 
-    EditText edName,edPrice,edQuantity;
+    EditText edId,edName,edPrice,edQuantity;
     TextView txtDate;
-    Button btnAdd,btnDate;
-
-    RecyclerView rev;
-    OrderRevAdapter adapter;
+    Button btnDel,btnDate,btnUpdate;
 
     SqliteOrderHelper sqliteOrderHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_update);
         init();
+
+        Intent intent = getIntent();
+        Order order = (Order) intent.getSerializableExtra("order");
+        edId.setText(order.getId()+"");
+        edName.setText(order.getItemName());
+        edPrice.setText(order.getPrice()+"");
+        edQuantity.setText(order.getQuantity()+"");
+        txtDate.setText(order.getDateOrder());
     }
 
     public void init()
@@ -45,44 +50,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         edName = findViewById( R.id.edItemName);
         edPrice = findViewById(R.id.edItemPrice);
         edQuantity = findViewById(R.id.edItemQuantity);
+        edId = findViewById(R.id.edItemID);
+
 
         txtDate = findViewById( R.id.txtOrderDate);
 
-        btnAdd = findViewById(R.id.btnAdd);
         btnDate = findViewById(R.id.btnDate);
-        btnAdd.setOnClickListener(this);
         btnDate.setOnClickListener(this);
+        btnDel = findViewById(R.id.btnDel);
+        btnDel.setOnClickListener(this);
+        btnUpdate = findViewById(R.id.btnUpdate);
+        btnUpdate.setOnClickListener(this);
 
         sqliteOrderHelper = new SqliteOrderHelper(this);
 
-        rev = findViewById(R.id.rev);
-        List<Order> listOrders = sqliteOrderHelper.getAll();
-        adapter = new OrderRevAdapter(listOrders);
-        rev.setLayoutManager(new LinearLayoutManager(this,LinearLayoutManager.VERTICAL,false));
-        rev.setAdapter(adapter);
-
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_main,menu);
-        MenuItem item = menu.findItem(R.id.mSearch);
-        SearchView searchView = (SearchView) MenuItemCompat.getActionView(item);
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                return false;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                List<Order> listOrders = sqliteOrderHelper.searchByName(newText);
-                adapter.setListOrders(listOrders);
-                return true;
-            }
-        });
-
-        return super.onCreateOptionsMenu(menu);
     }
 
     @Override
@@ -101,16 +82,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             },mYear,mMonth,mDay);
             datePickerDialog.show();
         }
-        if(v == btnAdd)
+        if(v== btnDel)
         {
-            String name = edName.getText().toString();
-            Double price = Double.parseDouble(edPrice.getText().toString());
-            int quantity = Integer . parseInt(edQuantity.getText().toString());
-            String orderDate = txtDate.getText().toString();
-            Order  order = new Order(name,price,quantity,orderDate);
-            sqliteOrderHelper.addOrder(order);
-            List<Order> listOrders = sqliteOrderHelper.getAll();
-            adapter.setListOrders(listOrders);
+            int id = Integer.parseInt(edId.getText().toString());
+            sqliteOrderHelper.delete(id);
+            Intent intent = new Intent(UpdateActivity.this,MainActivity.class);
+            startActivity(intent);
         }
+        if(v== btnUpdate)
+        {
+            int id = Integer.parseInt(edId.getText().toString());
+            String name = edName.getText().toString();
+            double price = Double.parseDouble(edPrice.getText().toString());
+            int quantity = Integer.parseInt(edQuantity.getText().toString());
+            String orderDate = txtDate.getText().toString();
+            Order order = new Order(id,name,price,quantity,orderDate);
+            sqliteOrderHelper.update(order);
+            Intent intent = new Intent(UpdateActivity.this,MainActivity.class);
+            startActivity(intent);
+        }
+
     }
 }
